@@ -1,13 +1,14 @@
 # debug_toolbar
 
-Reusable development debug toolbar for Ring applications.
+Development debug toolbar for Ring applications.
 
 ## Features
 
-- Dev-only Ring middleware that injects a floating debug panel into full HTML responses
-- JDBC query capture via `datasource-proxy`
-- Default English UI built in pure Clojure HTML/CSS/JS
-- Hooks for applications to record route metadata and rendered view metadata
+- Dev-only Ring middleware for full HTML responses
+- HTMX fragment requests skipped automatically
+- SQL capture via `datasource-proxy`
+- Default UI in pure Clojure HTML/CSS/JS
+- Optional route and rendered-view metadata hooks
 
 ## Install
 
@@ -40,7 +41,11 @@ Use as a git dependency:
      :ui-options {:collapsed-by-default? true}}))
 ```
 
-To record rendered views from your app:
+`wrap-debug-toolbar` injects toolbar HTML only into full `text/html` responses that contain `</body>`.
+
+## Optional Integrations
+
+Record rendered views from your app:
 
 ```clojure
 (laconiccrafts.debug-toolbar.core/record-view-render!
@@ -49,7 +54,7 @@ To record rendered views from your app:
    :view-context {:email "ada@example.com"}})
 ```
 
-To capture SQL:
+Capture SQL by wrapping your datasource:
 
 ```clojure
 (laconiccrafts.debug-toolbar.sql/wrap-datasource
@@ -58,9 +63,14 @@ To capture SQL:
    :name "my-app-debug-toolbar"})
 ```
 
+Full SQL and rendered-view setup examples live in [docs/kit-framework.md](docs/kit-framework.md).
+
+## Kit Framework
+
+For server-rendered Kit HTML apps, add toolbar middleware in `env/dev/clj/<app>/dev_middleware.clj` and follow [docs/kit-framework.md](docs/kit-framework.md) for full install, setup, and configuration steps.
+
 ## Testing
 
 ```bash
 clj -M:test
 ```
-
