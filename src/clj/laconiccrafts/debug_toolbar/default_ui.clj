@@ -340,7 +340,7 @@
 
 
 (defn render-default-toolbar-html
-  "Renders the shipped English debug toolbar UI from generic toolbar data."
+  "Renders the shipped debug toolbar UI from generic toolbar data."
   [toolbar-data]
   (let [ui-options (:ui-options toolbar-data)
         copy (merge render/default-copy (:copy ui-options))
