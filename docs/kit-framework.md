@@ -12,23 +12,15 @@ This guide targets:
 
 This toolbar only injects into full HTML responses. API-only Kit apps will not show the toolbar unless they also render complete HTML pages with a closing `</body>` tag.
 
-You can create a new Kit app with either supported command:
-
-Where this command runs: terminal, outside your app directory.
-
 ```bash
 neil new io.github.kit-clj/kit yourname/guestbook
 ```
-
-Where this command runs: terminal, outside your app directory.
 
 ```bash
 clojure -Tclj-new create :template io.github.kit-clj :name yourname/guestbook
 ```
 
 If your Kit app does not already render HTML pages, install Kit HTML support first.
-
-Where this code goes: REPL inside your Kit app.
 
 ```clojure
 (require '[kit.api :as kit])
@@ -41,15 +33,13 @@ After installing a Kit module, restart your REPL before continuing.
 
 ## 1. Install Library
 
-Add `debug_toolbar` to your Kit app dependencies.
-
-Where this code goes: your Kit app `deps.edn`.
+Add `debug_toolbar` to your project `deps.edn`.
 
 ```clojure
 {:deps
  {laconiccrafts/debug-toolbar
   {:git/url "https://github.com/laconiccrafts/debug_toolbar.git"
-   :git/tag "v0.1.0"
+   :git/tag "vX.X.X"
    :git/sha "<sha>"}}}
 ```
 
@@ -58,8 +48,6 @@ If `deps.edn` already has a `:deps` map, add only the `laconiccrafts/debug-toolb
 ## 2. Enable Middleware
 
 Add toolbar middleware in Kit development middleware so it runs only in development.
-
-Where this code goes: `env/dev/clj/<app>/dev_middleware.clj`.
 
 ```clojure
 (ns my-app.dev-middleware
@@ -84,10 +72,10 @@ Where this code goes: `env/dev/clj/<app>/dev_middleware.clj`.
 
 `ui-options` controls only toolbar presentation and which request data gets shown. Current supported keys are:
 
-- `:collapsed-by-default?`
-- `:slow-query-threshold-ms`
-- `:include-session?`
-- `:include-identity?`
+- `:collapsed-by-default?` controls initial open state of toolbar panel.
+- `:slow-query-threshold-ms` sets SQL timing threshold used by default UI to mark query row as slow. Queries at or above this number get highlighted in SQL tab.
+- `:include-session?` controls whether request `:session` data is copied into toolbar payload and shown in Session tab. 
+- `:include-identity?` controls whether authenticated user data is shown. When enabled, toolbar uses request `:identity` first, then falls back to `[:session :identity]` if present.
 
 ## 3. Record Rendered Views
 
@@ -95,27 +83,16 @@ The toolbar does not know which template rendered your page unless your app reco
 
 Create one shared layout helper and route all page rendering through it.
 
-Where this code goes: `src/clj/<app>/web/pages/layout.clj`.
-
 ```clojure
 (ns my-app.web.pages.layout
   (:require
-    [clojure.java.io :as io]
     [laconiccrafts.debug-toolbar.core :as debug-toolbar]))
-
-(defn- template-path
-  [template]
-  (when-let [resource (io/resource (str "html/" template))]
-    (-> resource
-        .toURI
-        java.io.File.
-        .getAbsolutePath)))
 
 (defn render
   [opts request template context]
   (debug-toolbar/record-view-render!
     {:view-id template
-     :view-path (template-path template)
+     :view-path (debug-toolbar/template-path template)
      :view-context context})
   {:status 200
    :headers {"Content-Type" "text/html; charset=utf-8"}
@@ -127,8 +104,6 @@ Where this code goes: `src/clj/<app>/web/pages/layout.clj`.
 If your app already has a layout helper, keep its existing response-shaping logic and add only the `record-view-render!` call plus `:view-id`, `:view-path`, and `:view-context` data.
 
 Update page routes to call the shared helper instead of calling Selmer directly.
-
-Where this code goes: `src/clj/<app>/web/routes/pages.clj`.
 
 ```clojure
 (ns my-app.web.routes.pages
@@ -147,8 +122,6 @@ Where this code goes: `src/clj/<app>/web/routes/pages.clj`.
 
 If you render HTML from controllers, use same helper there too.
 
-Where this code goes: any controller that returns rendered HTML, for example `src/clj/<app>/web/controllers/dashboard.clj`.
-
 ```clojure
 (ns my-app.web.controllers.dashboard
   (:require
@@ -164,31 +137,18 @@ Where this code goes: any controller that returns rendered HTML, for example `sr
 
 Wrap Kit datasource component once, then point your query functions at wrapped datasource.
 
-Create a small Integrant namespace for toolbar SQL wrapping.
-
-Where this code goes: `src/clj/<app>/debug_toolbar.clj`.
+Load toolbar SQL namespace once so Integrant sees the shared init method.
 
 ```clojure
-(ns my-app.debug-toolbar
+(ns my-app.db
   (:require
-    [integrant.core :as ig]
-    [laconiccrafts.debug-toolbar.sql :as debug-toolbar.sql]))
-
-(defmethod ig/init-key :db.sql/debug-connection
-  [_ {:keys [datasource name enabled?]
-      :or {name "my-app-debug-toolbar"}}]
-  (debug-toolbar.sql/wrap-datasource
-    datasource
-    {:enabled? enabled?
-     :name name}))
+    [laconiccrafts.debug-toolbar.sql]))
 ```
 
-Load that namespace so Integrant sees the `:db.sql/debug-connection` init method.
-
-Where this code goes: your app `src/clj/<app>/core.clj`, in the main `:require` list.
+That require registers `ig/init-key :db.sql/debug-connection`.
 
 ```clojure
-[my-app.debug-toolbar]
+[my-app.db]
 ```
 
 Now add wrapped datasource component and point query execution at it.
@@ -222,8 +182,6 @@ Where this code goes: your app `resources/system.edn`.
 For current Kit Conman setup, this works because `:db.sql/connection` resolves to a datasource-backed pooled connection object that `wrap-datasource` can decorate.
 
 If your app already has a `:db.sql/migrations` entry, point that datasource at the wrapped connection too.
-
-Where this code goes: existing `:db.sql/migrations` entry in `resources/system.edn`, only if your app uses SQL migrations.
 
 ```clojure
 :db.sql/migrations

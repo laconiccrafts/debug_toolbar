@@ -1,15 +1,20 @@
 (ns laconiccrafts.debug-toolbar.sql-test
   (:require
     [clojure.test :refer :all]
+    [integrant.core :as ig]
     [laconiccrafts.debug-toolbar.sql :as toolbar-sql])
   (:import
     (java.sql
       PreparedStatement)
+    (java.io
+      PrintWriter)
     (net.ttddyy.dsproxy
       ExecutionInfo
       QueryInfo)
     (net.ttddyy.dsproxy.proxy
-      ParameterSetOperation)))
+      ParameterSetOperation)
+    (javax.sql
+      DataSource)))
 
 
 (defn- set-string-method
@@ -50,3 +55,35 @@
           (toolbar-sql/wrap-datasource sentinel
             {:enabled? false})))))
 
+
+(defn- stub-datasource
+  "Returns a minimal datasource for wrapper tests."
+  []
+  (proxy [javax.sql.DataSource] []
+    (getConnection
+      ([] (throw (UnsupportedOperationException.)))
+      ([_ _] (throw (UnsupportedOperationException.))))
+    (getLogWriter []
+      nil)
+    (setLogWriter [^PrintWriter _]
+      (do))
+    (setLoginTimeout [_]
+      (do))
+    (getLoginTimeout []
+      0)
+    (getParentLogger []
+      (java.util.logging.Logger/getGlobal))
+    (unwrap [_]
+      nil)
+    (isWrapperFor [_]
+      false)))
+
+
+(deftest integrant-debug-connection-wraps-datasource
+  (let [datasource (stub-datasource)
+        wrapped (ig/init-key :db.sql/debug-connection
+                  {:datasource datasource
+                   :enabled? true
+                   :name "toolbar-test"})]
+    (is (instance? DataSource wrapped))
+    (is (not (identical? datasource wrapped)))))

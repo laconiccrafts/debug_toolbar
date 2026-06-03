@@ -1,5 +1,6 @@
 (ns laconiccrafts.debug-toolbar.core
   (:require
+    [clojure.java.io :as io]
     [clojure.string :as str]
     [laconiccrafts.debug-toolbar.default-ui :as default-ui]
     [laconiccrafts.debug-toolbar.inject :as inject]
@@ -17,6 +18,25 @@
    :slow-query-threshold-ms 100
    :include-session? true
    :include-identity? true})
+
+
+(defn template-path
+  "Returns absolute filesystem path for a classpath template resource.
+
+  With one arg, resolves `template` under the default `html/` root.
+  With two args, resolves `template` under `resource-root/`."
+  ([template]
+   (template-path "html" template))
+  ([resource-root template]
+   (some-> (io/resource
+             (str (str/replace (or resource-root "")
+                    #"/*$"
+                    "")
+               "/"
+               template))
+     .toURI
+     java.io.File.
+     .getAbsolutePath)))
 
 
 (defn- request-method
@@ -153,4 +173,3 @@
               (inject/full-html-response? request response))
           (inject/inject-html response toolbar-html)
           response)))))
-

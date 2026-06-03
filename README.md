@@ -1,6 +1,6 @@
 # debug_toolbar
 
-Development debug toolbar for Ring applications.
+Development debug toolbar for Ring applications, inspired by Django Debug Toolbar.
 
 ## Features
 
@@ -17,7 +17,7 @@ Use as a git dependency:
 ```clojure
 {laconiccrafts/debug-toolbar
  {:git/url "https://github.com/laconiccrafts/debug_toolbar.git"
-  :git/tag "v0.1.0"
+  :git/tag "v0.2.0"
   :git/sha "<sha>"}}
 ```
 
@@ -48,13 +48,21 @@ Use as a git dependency:
 Record rendered views from your app:
 
 ```clojure
+(require '[laconiccrafts.debug-toolbar.core :as debug-toolbar])
+
 (laconiccrafts.debug-toolbar.core/record-view-render!
   {:view-id "auth/login.html"
-   :view-path "/abs/path/to/auth/login.html"
+   :view-path (debug-toolbar/template-path "auth/login.html")
    :view-context {:email "ada@example.com"}})
 ```
 
-Capture SQL by wrapping your datasource:
+Resolve template files from a different classpath root:
+
+```clojure
+(debug-toolbar/template-path "templates" "emails/welcome.html")
+```
+
+Capture SQL by wrapping your datasource directly:
 
 ```clojure
 (laconiccrafts.debug-toolbar.sql/wrap-datasource
@@ -63,7 +71,28 @@ Capture SQL by wrapping your datasource:
    :name "my-app-debug-toolbar"})
 ```
 
-Full SQL and rendered-view setup examples live in [docs/kit-framework.md](docs/kit-framework.md).
+Or let Integrant initialize the wrapped datasource for you:
+
+```clojure
+(ns my-app.db
+  (:require
+    [laconiccrafts.debug-toolbar.sql]))
+```
+
+```clojure
+:db.sql/debug-connection
+{:datasource #ig/ref :db.sql/connection
+ :enabled?   #profile {:dev true
+                       :test false
+                       :prod false}
+ :name       "my-app-debug-toolbar"}
+```
+
+Requiring `laconiccrafts.debug-toolbar.sql` registers
+`ig/init-key :db.sql/debug-connection`.
+
+Full SQL and rendered-view setup examples live in
+[docs/kit-framework.md](docs/kit-framework.md).
 
 ## Kit Framework
 

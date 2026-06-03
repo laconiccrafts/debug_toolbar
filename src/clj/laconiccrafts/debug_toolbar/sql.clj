@@ -1,5 +1,6 @@
 (ns laconiccrafts.debug-toolbar.sql
   (:require
+    [integrant.core :as ig]
     [laconiccrafts.debug-toolbar.core :as toolbar-core])
   (:import
     (javax.sql
@@ -85,3 +86,11 @@
       .build)
     datasource))
 
+
+(defmethod ig/init-key :db.sql/debug-connection
+  [_ {:keys [datasource enabled? name]
+      :or {name "debug-toolbar"}}]
+  (wrap-datasource
+    datasource
+    {:enabled? enabled?
+     :name name}))

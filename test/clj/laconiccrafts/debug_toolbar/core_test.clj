@@ -1,5 +1,6 @@
 (ns laconiccrafts.debug-toolbar.core-test
   (:require
+    [clojure.java.io :as io]
     [clojure.string :as str]
     [clojure.test :refer :all]
     [laconiccrafts.debug-toolbar.core :as toolbar-core]))
@@ -85,3 +86,20 @@
           {:enabled? false})]
     (is (= response (app (html-request))))))
 
+
+(deftest template-path-resolves-default-html-root
+  (let [path (toolbar-core/template-path "laconiccrafts/debug_toolbar_fixture.html")]
+    (is (= (.getAbsolutePath
+             (io/file "test/resources/html/laconiccrafts/debug_toolbar_fixture.html"))
+          path))))
+
+
+(deftest template-path-resolves-custom-resource-root
+  (let [path
+        (toolbar-core/template-path
+          "custom-root"
+          "laconiccrafts/custom_debug_toolbar_fixture.html")]
+    (is (= (.getAbsolutePath
+             (io/file
+               "test/resources/custom-root/laconiccrafts/custom_debug_toolbar_fixture.html"))
+          path))))
