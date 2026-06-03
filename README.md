@@ -1,4 +1,4 @@
-# debug_toolbar
+# Debug Toolbar
 
 Development debug toolbar for Ring applications, inspired by Django Debug Toolbar.
 
@@ -18,7 +18,7 @@ Use as a git dependency:
 {laconiccrafts/debug-toolbar
  {:git/url "https://github.com/laconiccrafts/debug_toolbar.git"
   :git/tag "v0.3.0"
-  :git/sha "<sha>"}}
+  :git/sha "b79f68ea0157f3142ffa4ae4eed457554162e9d1"}}
 ```
 
 ## Basic Usage

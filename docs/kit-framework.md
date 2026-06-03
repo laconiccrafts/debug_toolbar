@@ -39,8 +39,8 @@ Add `debug_toolbar` to your project `deps.edn`.
 {:deps
  {laconiccrafts/debug-toolbar
   {:git/url "https://github.com/laconiccrafts/debug_toolbar.git"
-   :git/tag "vX.X.X"
-   :git/sha "<sha>"}}}
+   :git/tag "v0.3.0"
+   :git/sha "b79f68ea0157f3142ffa4ae4eed457554162e9d1"}}}
 ```
 
 If `deps.edn` already has a `:deps` map, add only the `laconiccrafts/debug-toolbar` entry.
