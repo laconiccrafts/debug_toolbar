@@ -216,7 +216,7 @@ Then verify behavior in browser:
 
 - Load a normal HTML page such as `/`. Toolbar should appear.
 - Hit a page that executes SQL. `SQL Queries` tab should list statements and timings.
-- Hit a page rendered through `layout/render`. `View File` and `View Context` should be populated.
+- Hit a page rendered through `layout/render`. `View Template` and `View Context` should be populated.
 - Trigger an HTMX fragment request. Toolbar should not be injected into fragment response.
 
 If toolbar does not appear, check these first:

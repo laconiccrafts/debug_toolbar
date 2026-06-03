@@ -17,7 +17,7 @@ Use as a git dependency:
 ```clojure
 {laconiccrafts/debug-toolbar
  {:git/url "https://github.com/laconiccrafts/debug_toolbar.git"
-  :git/tag "v0.2.0"
+  :git/tag "v0.3.0"
   :git/sha "<sha>"}}
 ```
 

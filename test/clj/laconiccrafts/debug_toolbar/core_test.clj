@@ -56,7 +56,7 @@
           {:enabled? true})
         response (app (html-request))
         body (:body response)]
-    (is (str/includes? body "View File"))
+    (is (str/includes? body "View Template"))
     (is (str/includes? body "/tmp/auth/login.html"))
     (is (str/includes? body "View Context"))
     (is (str/includes? body "&quot;abc&quot;"))))

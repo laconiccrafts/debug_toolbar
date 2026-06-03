@@ -109,10 +109,37 @@
     "}"
     "#" render/toolbar-root-id " [data-toolbar-block] + [data-toolbar-block] {margin-top: 1rem;}"
     "#" render/toolbar-root-id " [data-toolbar-block-title] {"
-    "margin: 0 0 0.4rem;"
+    "display: flex;"
+    "align-items: center;"
+    "justify-content: space-between;"
+    "gap: 0.75rem;"
+    "margin: 0;"
+    "padding: 0.25rem 0;"
     "font-size: 0.8rem;"
     "font-weight: 700;"
     "color: rgba(244, 241, 234, 0.88);"
+    "cursor: pointer;"
+    "}"
+    "#" render/toolbar-root-id " [data-toolbar-block-title]:focus-visible {"
+    "outline: 2px solid rgba(249, 115, 22, 0.85);"
+    "outline-offset: 0.2rem;"
+    "border-radius: 0.35rem;"
+    "}"
+    "#" render/toolbar-root-id " [data-toolbar-block-title]::after {"
+    "content: '−';"
+    "flex-shrink: 0;"
+    "font-size: 1rem;"
+    "line-height: 1;"
+    "color: rgba(244, 241, 234, 0.62);"
+    "}"
+    "#" render/toolbar-root-id " [data-toolbar-block].is-collapsed [data-toolbar-block-title]::after {"
+    "content: '+';"
+    "}"
+    "#" render/toolbar-root-id " [data-toolbar-block-content] {"
+    "margin-top: 0.4rem;"
+    "}"
+    "#" render/toolbar-root-id " [data-toolbar-block].is-collapsed [data-toolbar-block-content] {"
+    "display: none;"
     "}"
     "#" render/toolbar-root-id " pre {"
     "margin: 0;"
@@ -164,6 +191,7 @@
     "var panel = root.querySelector('[data-toolbar-panel]');"
     "var tabs = root.querySelectorAll('[data-toolbar-tab]');"
     "var views = root.querySelectorAll('[data-toolbar-view]');"
+    "var blockTitles = root.querySelectorAll('[data-toolbar-block-title]');"
     "var defaultOpen = root.getAttribute('data-collapsed-by-default') !== 'true';"
     "var stored = window.localStorage.getItem(storageKey);"
     "var open = stored === null ? defaultOpen : stored === 'true';"
@@ -180,11 +208,29 @@
     "view.classList.toggle('is-active', view.getAttribute('data-toolbar-view') === name);"
     "});"
     "}"
+    "function setBlockExpanded(title, expanded) {"
+    "var block = title.closest('[data-toolbar-block]');"
+    "if (!block) { return; }"
+    "block.classList.toggle('is-collapsed', !expanded);"
+    "title.setAttribute('aria-expanded', String(expanded));"
+    "}"
     "toggle.addEventListener('click', function () { setOpen(!open); });"
     "tabs.forEach(function (tab) {"
     "tab.addEventListener('click', function () {"
     "activateTab(tab.getAttribute('data-toolbar-tab'));"
     "});"
+    "});"
+    "blockTitles.forEach(function (title) {"
+    "title.addEventListener('click', function () {"
+    "setBlockExpanded(title, title.getAttribute('aria-expanded') !== 'true');"
+    "});"
+    "title.addEventListener('keydown', function (event) {"
+    "if (event.key === 'Enter' || event.key === ' ') {"
+    "event.preventDefault();"
+    "setBlockExpanded(title, title.getAttribute('aria-expanded') !== 'true');"
+    "}"
+    "});"
+    "setBlockExpanded(title, true);"
     "});"
     "activateTab('summary');"
     "setOpen(open);"
@@ -221,6 +267,7 @@
 
 
 (defn- empty-state
+  "Renders the standard empty-state message for a toolbar block."
   [copy]
   (str "<div data-toolbar-empty>"
     (html-escape (:no-data copy))
@@ -228,6 +275,7 @@
 
 
 (defn- pre-or-empty
+  "Wraps rendered content in a `<pre>` tag or falls back to the empty state."
   [copy rendered-value]
   (if (present? rendered-value)
     (str "<pre>" rendered-value "</pre>")
@@ -235,14 +283,20 @@
 
 
 (defn- block
+  "Renders a titled toolbar block with collapsible body content."
   [title body]
   (str "<div data-toolbar-block>"
-    "<h4 data-toolbar-block-title>" (html-escape title) "</h4>"
+    "<h4 data-toolbar-block-title role=\"button\" tabindex=\"0\" aria-expanded=\"true\">"
+    (html-escape title)
+    "</h4>"
+    "<div data-toolbar-block-content>"
     body
+    "</div>"
     "</div>"))
 
 
 (defn- metric
+  "Renders a summary metric tile with escaped label and value text."
   [label value]
   (str "<div data-toolbar-metric>"
     "<span data-toolbar-metric-label>" (html-escape label) "</span>"
@@ -251,6 +305,7 @@
 
 
 (defn- sql-row
+  "Renders a single SQL event row, including statement, params, metadata, and errors."
   [copy slow-threshold-ms index event]
   (let [statement (or (:sql event)
                     (str/join "\n\n" (keep :sql (:queries event))))
@@ -350,7 +405,7 @@
         (str (get-in toolbar-data [:totals :sql-total-ms]) "ms"))
       "</div>"
       (block (:route-label copy) (pre-or-empty copy route-pre))
-      (block (:view-file-block copy) (pre-or-empty copy view-path))
+      (block (:view-template-block copy) (pre-or-empty copy view-path))
       (block (:view-context-block copy) (pre-or-empty copy view-context-pre))
       (block (:request-block copy) (pre-or-empty copy request-pre))
       (block (:response-block copy) (pre-or-empty copy response-pre))
@@ -372,4 +427,3 @@
       "</section>"
       "<script>" toolbar-js "</script>"
       "</div>")))
-

@@ -22,7 +22,7 @@
    :sql-metric "Queries"
    :sql-time-metric "SQL Time"
    :route-label "Route"
-   :view-file-block "View File"
+   :view-template-block "View Template"
    :view-context-block "View Context"
    :request-block "Request"
    :response-block "Response"
