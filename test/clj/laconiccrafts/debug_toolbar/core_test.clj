@@ -103,3 +103,12 @@
              (io/file
                "test/resources/custom-root/laconiccrafts/custom_debug_toolbar_fixture.html"))
           path))))
+
+
+(deftest template-path-returns-jar-uri-for-embedded-resources
+  (with-redefs [io/resource
+                (fn [_path]
+                  (java.net.URL.
+                    "jar:file:/tmp/debug-toolbar.jar!/html/auth/login.html"))]
+    (is (= "jar:file:/tmp/debug-toolbar.jar!/html/auth/login.html"
+          (toolbar-core/template-path "auth/login.html")))))

@@ -62,6 +62,9 @@ Resolve template files from a different classpath root:
 (debug-toolbar/template-path "templates" "emails/welcome.html")
 ```
 
+`template-path` returns an absolute path for file-backed resources and a
+URI string for embedded resources such as uberjar entries.
+
 Capture SQL by wrapping your datasource directly:
 
 ```clojure

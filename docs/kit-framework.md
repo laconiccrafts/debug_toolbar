@@ -103,6 +103,9 @@ Create one shared layout helper and route all page rendering through it.
 
 If your app already has a layout helper, keep its existing response-shaping logic and add only the `record-view-render!` call plus `:view-id`, `:view-path`, and `:view-context` data.
 
+`template-path` is safe for both file-backed templates and embedded
+resources loaded from an uberjar.
+
 Update page routes to call the shared helper instead of calling Selmer directly.
 
 ```clojure

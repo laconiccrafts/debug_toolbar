@@ -20,8 +20,21 @@
    :include-identity? true})
 
 
+(defn- resource-location
+  "Returns a stable display location for a classpath resource."
+  [resource]
+  (when resource
+    (let [uri (.toURI resource)]
+      (if (= "file" (.getScheme uri))
+        (.getAbsolutePath (java.io.File. uri))
+        (str uri)))))
+
+
 (defn template-path
-  "Returns absolute filesystem path for a classpath template resource.
+  "Returns a displayable location string for a classpath template resource.
+
+  File-backed resources return an absolute filesystem path. Embedded
+  resources, such as jar entries, return their URI string.
 
   With one arg, resolves `template` under the default `html/` root.
   With two args, resolves `template` under `resource-root/`."
@@ -34,9 +47,7 @@
                     "")
                "/"
                template))
-     .toURI
-     java.io.File.
-     .getAbsolutePath)))
+     resource-location)))
 
 
 (defn- request-method
