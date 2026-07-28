@@ -12,14 +12,29 @@ Development debug toolbar for Ring applications, inspired by Django Debug Toolba
 
 ## Install
 
-Use as a git dependency:
+With `deps.edn`, use as a git dependency:
 
 ```clojure
 {laconiccrafts/debug-toolbar
  {:git/url "https://github.com/laconiccrafts/debug_toolbar.git"
   :git/tag "v0.3.1"
-  :git/sha "0bdf4a1ea68af6eb4e6f29eaefc4c96e2422bebb"}}
+  :git/sha "0bdf4a1ad0a8eb56a7833b3ce2ed7559ccf89be6"}}
 ```
+
+With Leiningen/Luminus, use a published Maven artifact when available. If no
+artifact is available, vendor or checkout the library source and add it to the
+dev profile source paths:
+
+```clojure
+:profiles
+{:dev
+ {:source-paths ["env/dev/clj"
+                 "vendor/debug_toolbar/src/clj"]
+  :dependencies [[integrant/integrant "0.13.1"]
+                 [net.ttddyy/datasource-proxy "1.11.0"]]}}
+```
+
+Leiningen does not consume `deps.edn` git coordinates directly.
 
 ## Basic Usage
 
@@ -28,16 +43,12 @@ Use as a git dependency:
   (:require
     [laconiccrafts.debug-toolbar.core :as debug-toolbar]))
 
-(defn route-info
-  [request]
-  {:template (get-in request [:reitit.core/match :template])})
-
 (defn wrap-toolbar
   [handler]
   (debug-toolbar/wrap-debug-toolbar
     handler
     {:enabled? true
-     :route-info-fn route-info
+     :route-info-fn debug-toolbar/reitit-route-info
      :ui-options {:collapsed-by-default? true}}))
 ```
 
@@ -45,15 +56,28 @@ Use as a git dependency:
 
 ## Optional Integrations
 
+Record matched routes from framework middleware:
+
+```clojure
+(require '[laconiccrafts.debug-toolbar.core :as debug-toolbar])
+
+(debug-toolbar/record-reitit-route! request)
+```
+
+Use `:route-info-fn` when the wrapped request already contains the matched
+route. Use `record-reitit-route!` or `wrap-reitit-route-info` when route data
+only exists inside endpoint middleware, such as Reitit middleware in a Luminus
+app.
+
 Record rendered views from your app:
 
 ```clojure
 (require '[laconiccrafts.debug-toolbar.core :as debug-toolbar])
 
-(laconiccrafts.debug-toolbar.core/record-view-render!
-  {:view-id "auth/login.html"
-   :view-path (debug-toolbar/template-path "auth/login.html")
-   :view-context {:email "ada@example.com"}})
+(debug-toolbar/record-view-render!
+  "auth/login.html"
+  (debug-toolbar/template-path "auth/login.html")
+  {:email "ada@example.com"})
 ```
 
 Resolve template files from a different classpath root:
@@ -96,6 +120,12 @@ Requiring `laconiccrafts.debug-toolbar.sql` registers
 
 Full SQL and rendered-view setup examples live in
 [docs/kit-framework.md](docs/kit-framework.md).
+
+## Luminus Web With Leiningen
+
+For Luminus Web apps using Leiningen, add dev-only toolbar middleware and
+follow [docs/luminus-leiningen.md](docs/luminus-leiningen.md) for full setup
+and configuration steps.
 
 ## Kit Framework
 

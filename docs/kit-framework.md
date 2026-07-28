@@ -54,16 +54,12 @@ Add toolbar middleware in Kit development middleware so it runs only in developm
   (:require
     [laconiccrafts.debug-toolbar.core :as debug-toolbar]))
 
-(defn route-info
-  [request]
-  {:template (get-in request [:reitit.core/match :template])})
-
 (defn wrap-dev
   [handler opts]
   (-> handler
       (debug-toolbar/wrap-debug-toolbar
         {:enabled? (= :dev (:profile opts))
-         :route-info-fn route-info
+         :route-info-fn debug-toolbar/reitit-route-info
          :ui-options {:collapsed-by-default? true
                       :slow-query-threshold-ms 100
                       :include-session? true
@@ -91,9 +87,9 @@ Create one shared layout helper and route all page rendering through it.
 (defn render
   [opts request template context]
   (debug-toolbar/record-view-render!
-    {:view-id template
-     :view-path (debug-toolbar/template-path template)
-     :view-context context})
+    template
+    (debug-toolbar/template-path template)
+    context)
   {:status 200
    :headers {"Content-Type" "text/html; charset=utf-8"}
    :body ((get-in opts [:templating/selmer :render-file])
@@ -101,7 +97,7 @@ Create one shared layout helper and route all page rendering through it.
           context)})
 ```
 
-If your app already has a layout helper, keep its existing response-shaping logic and add only the `record-view-render!` call plus `:view-id`, `:view-path`, and `:view-context` data.
+If your app already has a layout helper, keep its existing response-shaping logic and add only the `record-view-render!` call.
 
 `template-path` is safe for both file-backed templates and embedded
 resources loaded from an uberjar.
