@@ -4,3 +4,4 @@
 .calva
 .lsp/.cache/db.transit.json
 .nrepl-port
+.clj-kondo/.cache
