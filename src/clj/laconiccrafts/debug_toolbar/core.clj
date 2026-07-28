@@ -128,10 +128,84 @@
 
 (defn record-view-render!
   "Stores rendered view metadata for the current request collector."
-  [view-data]
+  ([view-data]
+   (when (and *toolbar-collector*
+           view-data)
+     (swap! *toolbar-collector* assoc :view view-data)))
+  ([view-id view-context]
+   (record-view-render!
+     {:view-id view-id
+      :view-path view-id
+      :view-context view-context}))
+  ([view-id view-path view-context]
+   (record-view-render!
+     {:view-id view-id
+      :view-path view-path
+      :view-context view-context})))
+
+
+(defn record-route!
+  "Stores matched route metadata for the current request collector."
+  [route-data]
   (when (and *toolbar-collector*
-          view-data)
-    (swap! *toolbar-collector* assoc :view view-data)))
+          route-data)
+    (swap! *toolbar-collector* assoc :route route-data)))
+
+
+(defn- reitit-request-method
+  "Returns lower-case request method keyword for Reitit endpoint lookup."
+  [request]
+  (some-> (:request-method request)
+    name
+    str/lower-case
+    keyword))
+
+
+(defn- reitit-route-endpoint
+  "Returns the matched Reitit endpoint for the request method."
+  [request]
+  (get-in request [:reitit.core/match :result (reitit-request-method request)]))
+
+
+(defn reitit-route-info
+  "Extracts toolbar route metadata from a Reitit request match."
+  [request]
+  (when-let [match (:reitit.core/match request)]
+    (let [endpoint (reitit-route-endpoint request)
+          route-data (-> (:data endpoint)
+                       (dissoc :handler
+                         :middleware
+                         :coercion
+                         :parameters))]
+      {:method (reitit-request-method request)
+       :template (:template match)
+       :path (:path endpoint)
+       :path-params (:path-params request)
+       :parameters (:parameters request)
+       :route-data route-data})))
+
+
+(defn record-reitit-route!
+  "Records Reitit route metadata from the current request when present."
+  [request]
+  (when-let [route-data (reitit-route-info request)]
+    (record-route! route-data)))
+
+
+(defn wrap-reitit-route-info
+  "Wraps a sync Ring handler and records matched Reitit route metadata."
+  [handler]
+  (fn [request]
+    (record-reitit-route! request)
+    (handler request)))
+
+
+(def noop-hooks
+  "No-op hooks for shared app code when the toolbar is disabled."
+  {:record-route! (fn [_route-data] nil)
+   :record-reitit-route! (fn [_request] nil)
+   :record-view-render! (fn [_view-data] nil)
+   :wrap-datasource identity})
 
 
 (defn toolbar-data
@@ -143,7 +217,8 @@
                      (route-info-fn request))]
     {:request (request-summary request)
      :response (response-summary response elapsed-ms)
-     :route route-info
+     :route (or route-info
+              (:route collector))
      :view (:view collector)
      :params (request-params request)
      :session (when (:include-session? ui-options)

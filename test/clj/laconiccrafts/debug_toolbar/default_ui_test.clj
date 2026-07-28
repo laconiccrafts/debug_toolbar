@@ -40,6 +40,8 @@
     (is (str/includes? html "Development only"))
     (is (str/includes? html "Summary"))
     (is (str/includes? html "SQL Queries"))
+    (is (str/includes? html "Route"))
+    (is (str/includes? html "/login"))
     (is (str/includes? html "View Template"))
     (is (str/includes? html "/tmp/auth/login.html"))
     (is (str/includes? html "View Context"))
