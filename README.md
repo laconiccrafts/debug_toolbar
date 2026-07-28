@@ -89,6 +89,31 @@ Resolve template files from a different classpath root:
 `template-path` returns an absolute path for file-backed resources and a
 URI string for embedded resources such as uberjar entries.
 
+## Selmer vs Hiccup Views
+
+Selmer renders named template files, so use the template name as `:view-id` and
+the resolved resource location as `:view-path`:
+
+```clojure
+(debug-toolbar/record-view-render!
+  "auth/login.html"
+  (debug-toolbar/template-path "auth/login.html")
+  context)
+```
+
+Hiccup renders Clojure functions, not `.html` files. Use the page function Var
+for both `:view-id` and `:view-path`:
+
+```clojure
+(defn dashboard-page
+  [context]
+  (debug-toolbar/record-view-render! #'dashboard-page context)
+  [:main "Dashboard"])
+```
+
+Both forms populate the toolbar's View Template and View Context blocks. For
+Hiccup, the View Template value is the function Var instead of a file path.
+
 Capture SQL by wrapping your datasource directly:
 
 ```clojure
